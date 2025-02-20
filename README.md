@@ -92,7 +92,7 @@ body:
 ```
 {
   "book_eng": "Genesis",
-  "chapter": "1",
+  "chapter": 1,
   "verses_number": 31
 }
 ```
