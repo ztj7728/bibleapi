@@ -53,12 +53,49 @@ body:
         {
             "book_eng": "Genesis",
             "book_cn": "创世记",
-            "chapter": "1",
-            "verse": "1",
+            "chapter": 1,
+            "verse": 1,
             "content": "In the beginning God created the heavens and the earth."
         }
     ]
 }
 ```
+
+# body:
+
+```
+{
+  "book_eng": "Genesis",
+  "chapters_check": true
+}
+
+```
+# feedback
+```
+{
+  "book_eng": "Genesis",
+  "chapters_number": 50
+}
+```
+
+# body:
+
+```
+{
+  "book_eng": "Genesis",
+  "chapter": "1",
+  "verses_check": true
+}
+
+```
+# feedback
+```
+{
+  "book_eng": "Genesis",
+  "chapter": "1",
+  "verses_number": 31
+}
+```
+
 #
 [buymeacoffee](https://buymeacoffee.com/ztj7728)
