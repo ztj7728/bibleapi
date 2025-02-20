@@ -41,12 +41,12 @@ async def get_bible_verse(request: BibleRequest):
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # 查询整个章节的所有经文
+        # 查询整个章节的所有经文，按 id 排序
         query = """
-        SELECT verse, content_rev_eng, content_rev_cn
+        SELECT book_eng, book_cn, chapter, verse, content_rev_eng, content_rev_cn
         FROM bible
         WHERE book_eng = ? AND chapter = ?
-        ORDER BY id;
+        ORDER BY id;  -- 按 id 排序，确保顺序
         """
         cursor.execute(query, (book_eng, chapter))
         rows = cursor.fetchall()
@@ -55,12 +55,21 @@ async def get_bible_verse(request: BibleRequest):
         # 构建返回结果
         results = []
         for row in rows:
+            result = {
+                "book_eng": row["book_eng"],
+                "book_cn": row["book_cn"],
+                "chapter": row["chapter"],
+                "verse": row["verse"]
+            }
+
             if content_version == "rev_eng":
-                results.append({"verse": row["verse"], "content": row["content_rev_eng"]})
+                result["content"] = row["content_rev_eng"]
             elif content_version == "rev_cn":
-                results.append({"verse": row["verse"], "content": row["content_rev_cn"]})
+                result["content"] = row["content_rev_cn"]
             else:
-                results.append({"verse": row["verse"], "content": "Invalid version specified"})
+                result["content"] = "Invalid version specified"
+
+            results.append(result)
 
         return {"verses": results}
 
@@ -77,7 +86,7 @@ async def get_bible_verse(request: BibleRequest):
     # 遍历每个节数进行查询
     for v in verses:
         query = """
-        SELECT content_rev_eng, content_rev_cn
+        SELECT book_eng, book_cn, chapter, verse, content_rev_eng, content_rev_cn
         FROM bible
         WHERE book_eng = ? AND chapter = ? AND verse = ?;
         """
@@ -87,12 +96,21 @@ async def get_bible_verse(request: BibleRequest):
         if row is None:
             results.append({"verse": str(v), "content": "Verse not found"})
         else:
+            result = {
+                "book_eng": row["book_eng"],
+                "book_cn": row["book_cn"],
+                "chapter": row["chapter"],
+                "verse": str(v)
+            }
+
             if content_version == "rev_eng":
-                results.append({"verse": str(v), "content": row["content_rev_eng"]})
+                result["content"] = row["content_rev_eng"]
             elif content_version == "rev_cn":
-                results.append({"verse": str(v), "content": row["content_rev_cn"]})
+                result["content"] = row["content_rev_cn"]
             else:
-                results.append({"verse": str(v), "content": "Invalid version specified"})
+                result["content"] = "Invalid version specified"
+
+            results.append(result)
 
     conn.close()
     
