@@ -8,6 +8,14 @@ Ubuntu 20.04.3 LTS (GNU/Linux 5.4.0-205-generic x86_64)
 ```
 pip install fastapi uvicorn
 ```
+# Install
+```
+git clone https://github.com/ztj7728/bibleapi.git
+```
+
+```
+cd bibleapi
+```
 
 # run
 ```
