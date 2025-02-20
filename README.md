@@ -33,8 +33,8 @@ body:
 {
   "book_eng": "Genesis",
   "chapter": "1",
-  "verse": "1",//value can be 1-5, and value 0 for full output of chapter 1.
-  "content": "rev_eng"
+  "verse": "1",            //value can be 1-5, and value 0 for full output of chapter 1.
+  "content": "rev_eng"     //value rev_cn for zh-cn output.
 }
 ```
 
