@@ -8,8 +8,8 @@ app = FastAPI()
 # 定义请求体模型
 class BibleRequest(BaseModel):
     book_eng: str
-    chapter: str = None  # 章数可以为空（针对节数查询时）
-    verse: str = None    # 经文数可以为空（针对节数查询时）
+    chapter: int = None  # 章数可以为空（针对节数查询时）
+    verse: str = None    # 经文数可以为空（针对节数查询时，支持范围）
     content: str = None  # 使用 content 字段来指定版本，如 rev_eng 或 rev_cn
     chapters_check: bool = False  # 是否查询章数
     verses_check: bool = False    # 是否查询节数
@@ -50,7 +50,7 @@ async def get_bible_verse(request: BibleRequest):
 
     # 查询节数功能
     if request.verses_check:
-        if not chapter:
+        if chapter is None:
             raise HTTPException(status_code=400, detail="Chapter must be provided when querying for verses.")
         
         conn = get_db_connection()
@@ -90,8 +90,8 @@ async def get_bible_verse(request: BibleRequest):
             result = {
                 "book_eng": row["book_eng"],
                 "book_cn": row["book_cn"],
-                "chapter": row["chapter"],
-                "verse": row["verse"]
+                "chapter": row["chapter"],  # 确保返回的是数值类型
+                "verse": row["verse"]       # 确保返回的是数值类型
             }
 
             if content_version == "rev_eng":
@@ -119,17 +119,17 @@ async def get_bible_verse(request: BibleRequest):
         FROM bible
         WHERE book_eng = ? AND chapter = ? AND verse = ?;
         """
-        cursor.execute(query, (book_eng, chapter, str(v)))
+        cursor.execute(query, (book_eng, chapter, v))
         row = cursor.fetchone()
 
         if row is None:
-            results.append({"verse": str(v), "content": "Verse not found"})
+            results.append({"verse": v, "content": "Verse not found"})
         else:
             result = {
                 "book_eng": row["book_eng"],
                 "book_cn": row["book_cn"],
-                "chapter": row["chapter"],
-                "verse": str(v)
+                "chapter": row["chapter"],  # 确保返回的是数值类型
+                "verse": v                  # 确保返回的是数值类型
             }
 
             if content_version == "rev_eng":
@@ -145,10 +145,12 @@ async def get_bible_verse(request: BibleRequest):
     
     return {"verses": results}
 
-# 解析经文范围
+# 解析经文范围（支持范围解析）
 def parse_verse_range(verse: str):
+    # 如果是范围格式 (例如 "1-5")
     if '-' in verse:
         start_verse, end_verse = verse.split('-')
         return list(range(int(start_verse), int(end_verse) + 1))
+    # 如果是单个节数，直接返回一个列表
     else:
         return [int(verse)]
