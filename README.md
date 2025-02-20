@@ -49,7 +49,15 @@ body:
 # feedback
 ```
 {
-  "content": "In the beginning God created the heavens and the earth."
+    "verses": [
+        {
+            "book_eng": "Genesis",
+            "book_cn": "创世记",
+            "chapter": "1",
+            "verse": "1",
+            "content": "In the beginning God created the heavens and the earth."
+        }
+    ]
 }
 ```
 #
