@@ -7,10 +7,11 @@ app = FastAPI()
 
 # 定义请求体模型
 class BibleRequest(BaseModel):
-    book_eng: str
-    chapter: int = None  # 章数可以为空（针对节数查询时）
-    verse: str = None    # 经文数可以为空（针对节数查询时，支持范围）
-    content: str = None  # 使用 content 字段来指定版本，如 rev_eng 或 rev_cn 或 cuv_cn
+    book_eng: str = None  # 英文书名
+    book_cn: str = None   # 中文书名
+    chapter: int = None   # 章数可以为空（针对节数查询时）
+    verse: str = None     # 经文数可以为空（针对节数查询时，支持范围）
+    content: str = None   # 使用 content 字段来指定版本，如 rev_eng 或 rev_cn 或 cuv_cn
     chapters_check: bool = False  # 是否查询章数
     verses_check: bool = False    # 是否查询节数
 
@@ -25,9 +26,30 @@ def get_db_connection():
 async def get_bible_verse(request: BibleRequest):
     # 获取传入的数据
     book_eng = request.book_eng
+    book_cn = request.book_cn
     chapter = request.chapter
     verse = request.verse
     content_version = request.content  # 获取内容版本（rev_eng 或 rev_cn 或 cuv_cn）
+
+    # 如果指定了 book_cn，优先使用 book_cn 查找 book_eng
+    if book_cn:
+        # 根据 book_cn 查找对应的 book_eng
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        query = """
+        SELECT DISTINCT book_eng
+        FROM bible
+        WHERE book_cn = ?;
+        """
+        cursor.execute(query, (book_cn,))
+        row = cursor.fetchone()
+        conn.close()
+
+        if row is None:
+            raise HTTPException(status_code=404, detail="Book not found with the provided book_cn.")
+
+        book_eng = row["book_eng"]  # 将找到的 book_eng 更新为查询的 book_cn 对应的英文书名
 
     # 查询章数功能
     if request.chapters_check:
@@ -79,7 +101,7 @@ async def get_bible_verse(request: BibleRequest):
         SELECT book_eng, book_cn, chapter, verse, content_rev_eng, content_rev_cn, content_cuv_cn
         FROM bible
         WHERE book_eng = ? AND chapter = ?
-        ORDER BY verse;
+        ORDER BY id;
         """
         cursor.execute(query, (book_eng, chapter))
         rows = cursor.fetchall()
@@ -94,6 +116,7 @@ async def get_bible_verse(request: BibleRequest):
                 "verse": row["verse"]       # 确保返回的是数值类型
             }
 
+            # 根据请求的版本返回不同的内容
             if content_version == "rev_eng":
                 result["content"] = row["content_rev_eng"]
             elif content_version == "rev_cn":
@@ -134,6 +157,7 @@ async def get_bible_verse(request: BibleRequest):
                 "verse": v                  # 确保返回的是数值类型
             }
 
+            # 根据请求的版本返回不同的内容
             if content_version == "rev_eng":
                 result["content"] = row["content_rev_eng"]
             elif content_version == "rev_cn":
