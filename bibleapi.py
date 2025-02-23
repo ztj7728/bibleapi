@@ -10,13 +10,13 @@ class BibleRequest(BaseModel):
     book_eng: str
     chapter: int = None  # 章数可以为空（针对节数查询时）
     verse: str = None    # 经文数可以为空（针对节数查询时，支持范围）
-    content: str = None  # 使用 content 字段来指定版本，如 rev_eng 或 rev_cn
+    content: str = None  # 使用 content 字段来指定版本，如 rev_eng 或 rev_cn 或 cuv_cn
     chapters_check: bool = False  # 是否查询章数
     verses_check: bool = False    # 是否查询节数
 
 # 创建与 SQLite 数据库的连接
 def get_db_connection():
-    conn = sqlite3.connect('output.db')  # 这里请使用你的数据库路径
+    conn = sqlite3.connect('output_1.1.db')  # 这里请使用你的数据库路径
     conn.row_factory = sqlite3.Row  # 使得查询结果能够按列名访问
     return conn
 
@@ -27,7 +27,7 @@ async def get_bible_verse(request: BibleRequest):
     book_eng = request.book_eng
     chapter = request.chapter
     verse = request.verse
-    content_version = request.content  # 获取内容版本（rev_eng 或 rev_cn）
+    content_version = request.content  # 获取内容版本（rev_eng 或 rev_cn 或 cuv_cn）
 
     # 查询章数功能
     if request.chapters_check:
@@ -76,7 +76,7 @@ async def get_bible_verse(request: BibleRequest):
         cursor = conn.cursor()
 
         query = """
-        SELECT book_eng, book_cn, chapter, verse, content_rev_eng, content_rev_cn
+        SELECT book_eng, book_cn, chapter, verse, content_rev_eng, content_rev_cn, content_cuv_cn
         FROM bible
         WHERE book_eng = ? AND chapter = ?
         ORDER BY verse;
@@ -98,6 +98,8 @@ async def get_bible_verse(request: BibleRequest):
                 result["content"] = row["content_rev_eng"]
             elif content_version == "rev_cn":
                 result["content"] = row["content_rev_cn"]
+            elif content_version == "cuv_cn":
+                result["content"] = row["content_cuv_cn"]
             else:
                 result["content"] = "Invalid version specified"
 
@@ -115,7 +117,7 @@ async def get_bible_verse(request: BibleRequest):
 
     for v in verses:
         query = """
-        SELECT book_eng, book_cn, chapter, verse, content_rev_eng, content_rev_cn
+        SELECT book_eng, book_cn, chapter, verse, content_rev_eng, content_rev_cn, content_cuv_cn
         FROM bible
         WHERE book_eng = ? AND chapter = ? AND verse = ?;
         """
@@ -136,6 +138,8 @@ async def get_bible_verse(request: BibleRequest):
                 result["content"] = row["content_rev_eng"]
             elif content_version == "rev_cn":
                 result["content"] = row["content_rev_cn"]
+            elif content_version == "cuv_cn":
+                result["content"] = row["content_cuv_cn"]
             else:
                 result["content"] = "Invalid version specified"
 
