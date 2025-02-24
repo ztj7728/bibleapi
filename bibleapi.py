@@ -14,10 +14,11 @@ class BibleRequest(BaseModel):
     content: str = None   # 使用 content 字段来指定版本，如 rev_eng 或 rev_cn 或 cuv_cn
     chapters_check: bool = False  # 是否查询章数
     verses_check: bool = False    # 是否查询节数
+    footnotes: bool = False       # 是否查询脚注
 
 # 创建与 SQLite 数据库的连接
 def get_db_connection():
-    conn = sqlite3.connect('output_1.1.db')  # 这里请使用你的数据库路径
+    conn = sqlite3.connect('output.db')  # 这里请使用你的数据库路径
     conn.row_factory = sqlite3.Row  # 使得查询结果能够按列名访问
     return conn
 
@@ -98,7 +99,9 @@ async def get_bible_verse(request: BibleRequest):
         cursor = conn.cursor()
 
         query = """
-        SELECT book_eng, book_cn, chapter, verse, content_rev_eng, content_rev_cn, content_cuv_cn
+        SELECT book_eng, book_cn, chapter, verse, content_rev_eng, content_rev_cn, content_cuv_cn,
+               footnotes_1, footnotes_2, footnotes_3, footnotes_4, footnotes_5, footnotes_6, footnotes_7, footnotes_8,
+               footnotes_9, footnotes_10, footnotes_11, footnotes_12
         FROM bible
         WHERE book_eng = ? AND chapter = ?
         ORDER BY id;
@@ -126,6 +129,18 @@ async def get_bible_verse(request: BibleRequest):
             else:
                 result["content"] = "Invalid version specified"
 
+            # 如果 footnotes 为 True，则附加脚注内容
+            if request.footnotes:
+                footnotes = {}
+                for i in range(1, 13):  # 检查 footnotes_1 到 footnotes_12
+                    footnote_key = f"footnotes_{i}"
+                    footnote_value = row[footnote_key]
+                    if footnote_value:
+                        footnotes[f"footnotes_{i}"] = footnote_value
+                
+                # 将脚注添加到返回结果中
+                result.update(footnotes)
+
             results.append(result)
 
         return {"verses": results}
@@ -140,7 +155,9 @@ async def get_bible_verse(request: BibleRequest):
 
     for v in verses:
         query = """
-        SELECT book_eng, book_cn, chapter, verse, content_rev_eng, content_rev_cn, content_cuv_cn
+        SELECT book_eng, book_cn, chapter, verse, content_rev_eng, content_rev_cn, content_cuv_cn,
+               footnotes_1, footnotes_2, footnotes_3, footnotes_4, footnotes_5, footnotes_6, footnotes_7, footnotes_8,
+               footnotes_9, footnotes_10, footnotes_11, footnotes_12
         FROM bible
         WHERE book_eng = ? AND chapter = ? AND verse = ?;
         """
@@ -166,6 +183,18 @@ async def get_bible_verse(request: BibleRequest):
                 result["content"] = row["content_cuv_cn"]
             else:
                 result["content"] = "Invalid version specified"
+
+            # 如果 footnotes 为 True，则附加脚注内容
+            if request.footnotes:
+                footnotes = {}
+                for i in range(1, 13):  # 检查 footnotes_1 到 footnotes_12
+                    footnote_key = f"footnotes_{i}"
+                    footnote_value = row[footnote_key]
+                    if footnote_value:
+                        footnotes[f"footnotes_{i}"] = footnote_value
+                
+                # 将脚注添加到返回结果中
+                result.update(footnotes)
 
             results.append(result)
 
